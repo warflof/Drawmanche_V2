@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import HomeView from '../views/HomeView.vue'
+import MancheGalerie from '../views/MancheGalerie.vue'
 
 const routes = [
   {
     path: '/',
-    component: HomeView,
+    component: MancheGalerie,
   },
 ]
 
