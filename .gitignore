@@ -1,1 +1,4 @@
 mdp.txt
+.env
+node_modules/
+dist/
