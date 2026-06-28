@@ -68,7 +68,7 @@ export const useMancheStore = defineStore('manche', {
       // RLS filtre automatiquement sur auth.uid() = user_id
       const { data } = await supabase
         .from('submissions')
-        .select('id')
+        .select('id, image_display_path')
         .eq('manche_id', this.current.id)
         .maybeSingle()
       this.mySubmission = data
@@ -95,13 +95,18 @@ export const useMancheStore = defineStore('manche', {
     async loadAll() {
       this.loading = true
       this.error = null
-      await this.loadCurrent()
-      await Promise.all([
-        this.loadGalerie(),
-        this.loadMyVote(),
-        this.loadMySubmission(),
-      ])
-      this.loading = false
+      try {
+        await this.loadCurrent()
+        await Promise.all([
+          this.loadGalerie(),
+          this.loadMyVote(),
+          this.loadMySubmission(),
+        ])
+      } catch (e) {
+        this.error = e.message ?? 'Erreur inattendue'
+      } finally {
+        this.loading = false
+      }
     },
   },
 })

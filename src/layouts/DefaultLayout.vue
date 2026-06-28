@@ -5,6 +5,7 @@
 
       <nav class="nav">
         <template v-if="auth.isAuthenticated">
+          <RouterLink to="/soumettre" class="nav-link">Soumettre</RouterLink>
           <span class="user-info">
             <img
               v-if="auth.profile?.avatar_url"
@@ -65,6 +66,17 @@ async function handleSignOut() {
 .logo {
   font-weight: 700;
   font-size: 1.1rem;
+}
+
+.nav-link {
+  font-size: 0.875rem;
+  color: #7c3aed;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.nav-link:hover {
+  text-decoration: underline;
 }
 
 .nav {

@@ -1,11 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import MancheGalerie from '../views/MancheGalerie.vue'
+import SoumettreView from '../views/SoumettreView.vue'
 
 const routes = [
   {
     path: '/',
     component: MancheGalerie,
+  },
+  {
+    path: '/soumettre',
+    component: SoumettreView,
+    meta: { requiresAuth: true },
   },
 ]
 
