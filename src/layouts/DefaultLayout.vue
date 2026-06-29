@@ -1,10 +1,12 @@
 <template>
   <div class="app">
     <header class="header">
-      <span class="logo">Le Drawmanche</span>
+      <RouterLink to="/" class="logo">Le Drawmanche</RouterLink>
 
       <nav class="nav">
+        <RouterLink to="/gagnants" class="nav-link">Gagnants</RouterLink>
         <template v-if="auth.isAuthenticated">
+          <RouterLink v-if="auth.isAdmin" to="/admin" class="nav-link">Admin</RouterLink>
           <RouterLink to="/soumettre" class="nav-link">Soumettre</RouterLink>
           <span class="user-info">
             <img
@@ -66,6 +68,9 @@ async function handleSignOut() {
 .logo {
   font-weight: 700;
   font-size: 1.1rem;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
 }
 
 .nav-link {

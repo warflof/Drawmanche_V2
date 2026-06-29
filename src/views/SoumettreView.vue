@@ -4,6 +4,12 @@
     <!-- Chargement -->
     <div v-if="manche.loading" class="state-msg">Chargement…</div>
 
+    <!-- Erreur de chargement -->
+    <div v-else-if="manche.error" class="state-msg state-error">
+      <p>{{ manche.error }}</p>
+      <button class="btn-retry" @click="retry">Réessayer</button>
+    </div>
+
     <!-- Pas de manche active -->
     <div v-else-if="!manche.isActive" class="state-msg">
       <p>Aucune manche active en ce moment.</p>
@@ -86,7 +92,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useMancheStore } from '../stores/manche'
 import { useSubmission } from '../composables/useSubmission'
-import { supabase } from '../lib/supabase'
+import { getDisplayUrl } from '../lib/imageHelpers'
 
 const router = useRouter()
 const manche = useMancheStore()
@@ -98,11 +104,7 @@ const certified = ref(false)
 
 const canSubmit = computed(() => file.value && certified.value && !submitting.value)
 
-const submittedImgUrl = computed(() => {
-  const path = manche.mySubmission?.image_display_path
-  if (!path) return null
-  return supabase.storage.from('dessins-display').getPublicUrl(path).data.publicUrl
-})
+const submittedImgUrl = computed(() => getDisplayUrl(manche.mySubmission?.image_display_path) || null)
 
 function handleFile(e) {
   const f = e.target.files[0]
@@ -127,6 +129,10 @@ onMounted(async () => {
   if (!manche.current) await manche.loadAll()
 })
 
+async function retry() {
+  await manche.loadAll()
+}
+
 onUnmounted(() => {
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
 })
@@ -142,6 +148,21 @@ onUnmounted(() => {
   text-align: center;
   padding: 3rem 0;
   color: #6b7280;
+}
+
+.state-error {
+  color: #dc2626;
+}
+
+.btn-retry {
+  margin-top: 0.75rem;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid #dc2626;
+  border-radius: 6px;
+  background: #fff;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 0.875rem;
 }
 
 .link {

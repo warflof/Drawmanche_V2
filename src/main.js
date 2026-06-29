@@ -10,9 +10,10 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 
-// Lance l'écouteur Supabase avant le mount pour que la garde de route
-// ait accès à la session dès le premier rendu.
-const auth = useAuthStore()
-auth.init()
-
-app.mount('#app')
+// Attend que la session soit résolue (valide ou non) avant le premier rendu.
+// Élimine la race condition entre le montage des composants et l'état auth.
+;(async () => {
+  const auth = useAuthStore()
+  await auth.init()
+  app.mount('#app')
+})()

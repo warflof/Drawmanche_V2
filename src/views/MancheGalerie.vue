@@ -1,23 +1,12 @@
 <template>
-  <div class="galerie-page">
-    <div v-if="store.loading" class="state-msg">Chargement…</div>
-    <div v-else-if="store.error" class="state-msg state-error">{{ store.error }}</div>
-    <div v-else-if="!store.current" class="state-msg">Aucune manche en cours.</div>
+  <div class="galerie-wrap">
+    <div v-if="store.error" class="state-msg state-error">
+      <p>{{ store.error }}</p>
+      <button class="btn-retry" @click="store.loadAll()">Réessayer</button>
+    </div>
 
-    <template v-else>
-      <!-- En-tête -->
-      <header class="manche-header">
-        <div class="manche-top">
-          <span class="manche-num">Manche #{{ store.current.numero }}</span>
-          <span class="pill" :class="store.current.status">
-            {{ store.isActive ? 'En cours' : 'Terminée' }}
-          </span>
-        </div>
-        <h2 class="manche-theme">{{ store.current.theme }}</h2>
-        <p v-if="store.isActive" class="countdown">⏱ {{ countdown }}</p>
-      </header>
-
-      <!-- Message vote -->
+    <template v-else-if="store.current">
+      <!-- Messages vote -->
       <div v-if="voteError" class="vote-error">{{ voteError }}</div>
       <div v-if="store.myVote && store.isActive" class="vote-confirm-msg">
         Tu as voté pour cette manche.
@@ -39,11 +28,10 @@
         >
           <div class="card-img-wrap">
             <img
-              :src="imgSrc(item)"
+              :src="getDisplayUrl(item.image_display_path)"
               :alt="store.isClosed ? (item.author_username ?? 'Dessin') : 'Dessin'"
               class="card-img"
             />
-
             <span v-if="isMySubmission(item)" class="badge badge-mine">Ton dessin</span>
             <span v-else-if="isMyVote(item)" class="badge badge-voted">✓ Ton vote</span>
             <span v-if="isWinner(item)" class="badge badge-winner">🏆 Gagnant</span>
@@ -69,25 +57,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { useMancheStore } from '../stores/manche'
-import { supabase } from '../lib/supabase'
+import { getDisplayUrl } from '../lib/imageHelpers'
 
 const store = useMancheStore()
 const confirmId = ref(null)
 const voteError = ref(null)
-const countdown = ref('')
-let timer = null
-
-// ---------- helpers image ----------
-
-function imgSrc(item) {
-  const path = item.image_display_path
-  if (!path) return ''
-  return supabase.storage.from('dessins-display').getPublicUrl(path).data.publicUrl
-}
-
-// ---------- helpers état carte ----------
 
 function isMySubmission(item) {
   return store.mySubmission?.id === item.id
@@ -115,8 +91,6 @@ function cardClasses(item) {
   }
 }
 
-// ---------- vote ----------
-
 function handleClick(item) {
   if (!isVotable(item)) return
   voteError.value = null
@@ -131,86 +105,12 @@ async function confirmVote(submissionId) {
     voteError.value = e.message
   }
 }
-
-// ---------- compte à rebours ----------
-
-function nextSunday() {
-  const d = new Date()
-  const daysUntil = (7 - d.getDay()) % 7 || 7
-  d.setDate(d.getDate() + daysUntil)
-  d.setHours(23, 59, 59, 0)
-  return d
-}
-
-function updateCountdown() {
-  const target = store.current?.ends_at
-    ? new Date(store.current.ends_at)
-    : nextSunday()
-  const diff = target - Date.now()
-  if (diff <= 0) { countdown.value = 'Terminé'; return }
-  const d = Math.floor(diff / 86_400_000)
-  const h = Math.floor((diff % 86_400_000) / 3_600_000)
-  const m = Math.floor((diff % 3_600_000) / 60_000)
-  const s = Math.floor((diff % 60_000) / 1_000)
-  countdown.value = d > 0 ? `${d}j ${h}h ${m}m` : `${h}h ${m}m ${s}s`
-}
-
-// ---------- lifecycle ----------
-
-onMounted(async () => {
-  await store.loadAll()
-  updateCountdown()
-  timer = setInterval(updateCountdown, 1000)
-})
-
-onUnmounted(() => clearInterval(timer))
 </script>
 
 <style scoped>
-.galerie-page {
+.galerie-wrap {
   max-width: 1100px;
   margin: 0 auto;
-}
-
-/* ----- header ----- */
-.manche-header {
-  margin-bottom: 2rem;
-}
-
-.manche-top {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.4rem;
-}
-
-.manche-num {
-  font-size: 0.85rem;
-  color: #6b7280;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.pill {
-  font-size: 0.75rem;
-  padding: 2px 8px;
-  border-radius: 99px;
-  font-weight: 600;
-}
-
-.pill.active  { background: #dcfce7; color: #16a34a; }
-.pill.closed  { background: #f3f4f6; color: #6b7280; }
-
-.manche-theme {
-  font-size: 1.6rem;
-  font-weight: 700;
-  margin: 0 0 0.4rem;
-}
-
-.countdown {
-  font-size: 0.9rem;
-  color: #6b7280;
 }
 
 /* ----- messages ----- */
@@ -221,6 +121,17 @@ onUnmounted(() => clearInterval(timer))
 }
 
 .state-error { color: #dc2626; }
+
+.btn-retry {
+  margin-top: 0.75rem;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid #dc2626;
+  border-radius: 6px;
+  background: #fff;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
 
 .vote-error {
   background: #fef2f2;
